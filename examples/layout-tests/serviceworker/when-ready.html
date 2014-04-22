@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<title>Service Worker: whenReady</title>
+<script src="../resources/testharness.js"></script>
+<script src="../resources/testharnessreport.js"></script>
+<script src="resources/testutils.js"></script>
+<body>
+<script>
+var t = async_test('whenReady resolves when there is an installed worker');
+t.step(function() {
+    var scope = 'resources/blank.html';
+    navigator.serviceWorker.unregister(scope).then(t.step_func(doTest), t.step_func(doTest));
+
+    function doTest() {
+        assert_equals(typeof(navigator.serviceWorker.whenReady), 'function',
+                      'whenReady should be a function');
+        navigator.serviceWorker.whenReady().then(t.step_func(function(worker) {
+            // FIXME: We can't test this yet because .waiting is not implemented.
+            // assert_true(navigator.serviceWorker.waiting == worker,
+            //             'For a new registration, whenReady should resolve with the installed worker');
+            assert_true(worker instanceof ServiceWorker,
+                        'whenReady should resolve with a ServiceWorker');
+            withIframe(scope, doInIframe);
+        }), t.step_func(notReady));
+        navigator.serviceWorker.register(
+            'resources/worker-no-op.js', {scope: scope}
+        ).then(onRegister, t.step_func(function(reason) {
+            assert_unreached('Registration should succeed, but failed: ' + reason.name);
+        }));
+    }
+
+    function notReady(reason) {
+        assert_unreached('whenReady should never fail, but failed: ' + reason.name);
+    }
+
+    function doInIframe(frame) {
+        var w = frame.contentWindow;
+        w.navigator.serviceWorker.whenReady().then(t.step_func(function(worker) {
+            assert_true(w.navigator.serviceWorker.current == worker,
+                        'For an existing registration, whenReady should resolve with the active worker');
+            assert_true(worker instanceof ServiceWorker,
+                        'whenReady should resolve with a ServiceWorker')
+            t.done();
+        }), t.step_func(notReady));
+    }
+});
+</script>
+</body>
