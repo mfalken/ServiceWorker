@@ -13,6 +13,8 @@ t.step(function() {
     function doTest() {
         assert_equals(typeof(navigator.serviceWorker.whenReady), 'function',
                       'whenReady should be a function');
+        // FIXME: Add a test case for doInIframe before register as well.
+        // It should wait on whenReady and not resolve until after registration.
         navigator.serviceWorker.whenReady().then(t.step_func(function(worker) {
             // FIXME: We can't test this yet because .waiting is not implemented.
             // assert_true(navigator.serviceWorker.waiting == worker,
